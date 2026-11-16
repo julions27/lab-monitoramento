@@ -1,0 +1,79 @@
+zabbix_export:
+  version: '7.0'
+  host_groups:
+    - uuid: 37272d4f17114220bdd788415c108ffb
+      name: Internet
+    - uuid: 6f6799aa69e844b4b3918f779f2abf08
+      name: 'Zabbix servers'
+  hosts:
+    - host: Cloudflare
+      name: Cloudflare
+      templates:
+        - name: 'ICMP Ping'
+      groups:
+        - name: Internet
+      interfaces:
+        - ip: 1.1.1.1
+          interface_ref: if1
+      inventory_mode: DISABLED
+    - host: 'Gateway Brisanet'
+      name: 'Gateway Brisanet'
+      templates:
+        - name: 'ICMP Ping'
+      groups:
+        - name: Internet
+      interfaces:
+        - ip: 192.168.0.1
+          interface_ref: if1
+      inventory_mode: DISABLED
+    - host: Google
+      name: Google
+      templates:
+        - name: 'ICMP Ping'
+      groups:
+        - name: Internet
+      interfaces:
+        - ip: 8.8.8.8
+          interface_ref: if1
+      inventory_mode: DISABLED
+    - host: 'Zabbix server'
+      name: 'Zabbix server'
+      templates:
+        - name: 'Linux by Zabbix agent'
+        - name: 'Zabbix server health'
+      groups:
+        - name: 'Zabbix servers'
+      interfaces:
+        - useip: 'NO'
+          dns: zabbix-agent2
+          interface_ref: if1
+      items:
+        - name: 'DNS 1.1.1.1: tempo de resposta'
+          key: 'net.dns.perf[1.1.1.1,google.com,A,2,1]'
+          value_type: FLOAT
+          units: s
+          interface_ref: if1
+        - name: 'DNS casa: tempo de resposta'
+          key: 'net.dns.perf[177.37.220.17,google.com,A,2,1]'
+          value_type: FLOAT
+          units: s
+          interface_ref: if1
+        - name: 'DNS 1.1.1.1: status'
+          key: 'net.dns[1.1.1.1,google.com,A,2,1]'
+          interface_ref: if1
+        - name: 'DNS casa: status'
+          key: 'net.dns[177.37.220.17,google.com,A,2,1]'
+          interface_ref: if1
+      inventory:
+        name: 62bee93648f6
+        os: 'Linux version 6.12.74+deb13+1-amd64 (debian-kernel@lists.debian.org) (x86_64-linux-gnu-gcc-14 (Debian 14.2.0-19) 14.2.0, GNU ld '
+        location_lat: '56.97612'
+        location_lon: '24.16553'
+      inventory_mode: AUTOMATIC
+  triggers:
+    - expression: 'max(/Zabbix server/net.dns[177.37.220.17,google.com,A,2,1],#3)=0 and last(/Zabbix server/net.dns[1.1.1.1,google.com,A,2,1])=1'
+      name: 'DNS da casa não resolve (DNS público ok)'
+      priority: AVERAGE
+      dependencies:
+        - name: 'ICMP Ping: Unavailable by ICMP ping'
+          expression: 'max(/Gateway Brisanet/icmpping,#3)=0'
