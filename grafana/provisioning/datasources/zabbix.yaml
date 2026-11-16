@@ -1,8 +1,16 @@
 apiVersion: 1
+
+# Apaga e recria o datasource a cada inicialização.
+# Necessário porque o uid foi fixado depois da criação; com uid fixo, recriar é inofensivo.
+deleteDatasources:
+  - name: Zabbix
+    orgId: 1
+
 datasources:
   - name: Zabbix
+    uid: zabbix
     type: alexanderzobnin-zabbix-datasource
-    acess: proxy
+    access: proxy
     url: http://zabbix-web:8080/api_jsonrpc.php
     isDefault: true
     jsonData:
