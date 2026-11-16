@@ -30,6 +30,32 @@ services:
     networks:
       - monitor-net
 
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-7.0.32
+    container_name: zabbix-web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_SERVER_HOST: postgres-server
+      ZBX_SERVER_HOST: zabbix-server
+      PHP_TZ: ${TZ}
+      ZBX_SERVER_NAME: Lab Monitoramento
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres-server:
+        condition: service_healthy
+      zabbix-server:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - monitor-net
+
 networks:
   monitor-net:
     driver: bridge
